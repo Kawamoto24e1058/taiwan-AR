@@ -1,5 +1,5 @@
 {
-  "_comment": "衣装を追加するときはこの配列に1件足す。座標はすべて1080x1620の衣装画像上のpx。hole=手動モードの顔ガイド（楕円）。face=顔追従の基準（顔の中心と横幅）。faceが無い衣装は顔はめパネルとして動く。published=falseは非表示（監修前の衣装はfalseに）。",
+  "_comment": "衣装を追加するときはこの配列に1件足す。座標はすべて1080x1620の衣装画像上のpx。hole=手動モードの顔ガイド（楕円）。face=顔追従の基準（顔の中心と横幅）。faceが無い衣装は顔はめパネルとして動く。published=falseは非表示（監修前の衣装はfalseに）。 rig=骨格追従（関節の座標と部品画像）。",
   "costumes": [
     {
       "id": "costume-1",
@@ -22,7 +22,74 @@
         "fitScale": 1.1,
         "offsetY": 0
       },
-      "published": true
+      "published": true,
+      "rig": {
+        "joints": {
+          "shoulderL": [
+            355,
+            580
+          ],
+          "shoulderR": [
+            725,
+            580
+          ],
+          "elbowL": [
+            335,
+            790
+          ],
+          "elbowR": [
+            745,
+            790
+          ],
+          "kneeL": [
+            482,
+            1295
+          ],
+          "kneeR": [
+            596,
+            1295
+          ],
+          "ankleL": [
+            482,
+            1465
+          ],
+          "ankleR": [
+            596,
+            1465
+          ]
+        },
+        "neck": [
+          540,
+          445
+        ],
+        "bodyFit": 1.0,
+        "parts": [
+          {
+            "bone": "legL",
+            "image": "costumes/costume1/legL.webp"
+          },
+          {
+            "bone": "legR",
+            "image": "costumes/costume1/legR.webp"
+          },
+          {
+            "bone": "armL",
+            "image": "costumes/costume1/sleeveL.webp"
+          },
+          {
+            "bone": "armR",
+            "image": "costumes/costume1/sleeveR.webp"
+          },
+          {
+            "bone": "torso",
+            "image": "costumes/costume1/torso.webp"
+          },
+          {
+            "bone": "head",
+            "image": "costumes/costume1/head.webp"
+          }
+        ]
+      }
     },
     {
       "id": "costume-2",

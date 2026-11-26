@@ -1,18 +1,19 @@
 import { EVENT } from './config';
-import { coverRect, STAGE_H, STAGE_W, type Transform } from './geometry';
+import { coverRect, STAGE_H, STAGE_W } from './geometry';
+import { drawCostume, type Bone, type BoneTransforms } from './rig';
 
 export interface ComposeOptions {
   /** プレビューと同じく左右反転して描く（前面カメラのみ。決定事項: 見たまま保存） */
   mirror: boolean;
-  /** 衣装レイヤーの配置 */
-  transform: Transform;
+  /** 衣装の部品ごとの配置 */
+  bones: BoneTransforms;
 }
 
 /** カメラ映像の現在フレームと衣装レイヤーを合成した Canvas を返す */
 export function composeFrame(
   video: HTMLVideoElement,
-  costume: HTMLImageElement,
-  { mirror, transform }: ComposeOptions,
+  parts: { bone: Bone; img: CanvasImageSource }[],
+  { mirror, bones }: ComposeOptions,
 ): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = STAGE_W;
@@ -29,10 +30,7 @@ export function composeFrame(
   ctx.drawImage(video, r.x, r.y, r.w, r.h);
   ctx.restore();
 
-  const { k, rot, tx, ty } = transform;
-  ctx.setTransform(k * Math.cos(rot), k * Math.sin(rot), -k * Math.sin(rot), k * Math.cos(rot), tx, ty);
-  ctx.drawImage(costume, 0, 0, STAGE_W, STAGE_H);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  drawCostume(ctx, parts, bones, STAGE_W, STAGE_H);
   return canvas;
 }
 

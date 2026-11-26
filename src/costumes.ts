@@ -18,6 +18,17 @@ export interface FaceAnchor {
   offsetY?: number;
 }
 
+/** 骨格追従用の部品構成。関節の座標は衣装画像（1080x1620）上の位置 */
+export interface CostumeRig {
+  joints: Record<'shoulderL' | 'shoulderR' | 'elbowL' | 'elbowR' | 'kneeL' | 'kneeR' | 'ankleL' | 'ankleR', [number, number]>;
+  /** 襟の上端（顔の穴より上に来ないようにする基準。省略時は顔の穴の下端） */
+  neck?: [number, number];
+  /** 肩幅に対する衣装の大きさの倍率（既定 1） */
+  bodyFit?: number;
+  /** 描く順（下から）。bone は head / torso / armL / armR / legL / legR */
+  parts: { bone: 'head' | 'torso' | 'armL' | 'armR' | 'legL' | 'legR'; image: string }[];
+}
+
 export interface Costume {
   id: string;
   image: string;
@@ -27,6 +38,8 @@ export interface Costume {
   hole: Hole;
   /** 指定があれば顔追従する */
   face?: FaceAnchor;
+  /** 指定があれば、骨格に合わせて部品ごとに動かす */
+  rig?: CostumeRig;
   published: boolean;
 }
 

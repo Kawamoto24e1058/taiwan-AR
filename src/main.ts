@@ -5,14 +5,9 @@ import { canvasToBlob, composeFrame } from './compose';
 import { canShareFile, downloadFile, shareFile, toFile } from './share';
 import { isInAppBrowser, redirectLineToExternal } from './browser';
 import { detectFace, initTracker, isTrackerReady } from './tracker';
-import {
-  defaultTransform,
-  lerpTransform,
-  STAGE_W,
-  trackedTransform,
-  videoFaceToStage,
-  type Transform,
-} from './geometry';
+import { defaultTransform, STAGE_H, STAGE_W, trackedTransform, videoFaceToStage } from './geometry';
+import { detectPoses, initPose, isPoseReady } from './pose';
+import { drawCostume, lerpBones, pickPose, rigTransforms, uniform, type Bone, type BoneTransforms } from './rig';
 
 type Screen = 'top' | 'select' | 'camera' | 'camera-error' | 'result';
 
@@ -20,7 +15,8 @@ const $ = <T extends Element>(sel: string) => document.querySelector<T>(sel)!;
 
 const stage = $<HTMLDivElement>('#stage');
 const video = $<HTMLVideoElement>('#video');
-const overlay = $<HTMLImageElement>('#costume-overlay');
+const overlay = $<HTMLCanvasElement>('#costume-canvas');
+const overlayCtx = overlay.getContext('2d')!;
 const guide = $<SVGSVGElement>('#guide');
 const guideEllipse = $<SVGEllipseElement>('#guide-ellipse');
 const cameraStatus = $<HTMLParagraphElement>('#camera-status');
@@ -37,7 +33,12 @@ const SMOOTHING = 0.35;
 let costumes: Costume[] = [];
 let selected: Costume | null = null;
 let facing: Facing = 'user';
-let current: Transform = { k: 1, rot: 0, tx: 0, ty: 0 };
+let current: BoneTransforms = uniform({ k: 1, rot: 0, tx: 0, ty: 0 });
+/** ?debug 付きで開くと、検出した関節を描く（実機での調整用） */
+const DEBUG = new URLSearchParams(location.search).has('debug');
+let debugPose: ((i: number) => { x: number; y: number } | null) | null = null;
+/** 選択中の衣装の部品画像（下から描く順） */
+let parts: { bone: Bone; img: HTMLImageElement }[] = [];
 let lastFaceAt = 0;
 let loopId = 0;
 let resultFile: File | null = null;
@@ -116,9 +117,37 @@ function renderCostumeList(): void {
 }
 
 /* ---------- 衣装レイヤーの描画 ---------- */
-function applyTransform(tr: Transform): void {
-  const d = stage.clientWidth / STAGE_W; // ステージ座標 → 表示px
-  overlay.style.transform = `translate(${tr.tx * d}px, ${tr.ty * d}px) rotate(${tr.rot}rad) scale(${tr.k})`;
+/** 衣装の部品画像を読み込む（骨格追従しない衣装は1枚を頭に付ける） */
+async function loadParts(costume: Costume): Promise<{ bone: Bone; img: HTMLImageElement }[]> {
+  const defs = costume.rig?.parts ?? [{ bone: 'head' as Bone, image: costume.image }];
+  return Promise.all(defs.map(async (d) => ({ bone: d.bone, img: await loadImage(d.image) })));
+}
+
+function drawDebug(get: (i: number) => { x: number; y: number } | null): void {
+  const bones: [number, number][] = [[11, 12], [11, 13], [12, 14], [13, 15], [14, 16], [11, 23], [12, 24], [23, 24], [23, 25], [24, 26], [25, 27], [26, 28]];
+  overlayCtx.lineWidth = 6;
+  overlayCtx.strokeStyle = '#00e5ff';
+  for (const [a, b] of bones) {
+    const p = get(a);
+    const q = get(b);
+    if (!p || !q) continue;
+    overlayCtx.beginPath();
+    overlayCtx.moveTo(p.x, p.y);
+    overlayCtx.lineTo(q.x, q.y);
+    overlayCtx.stroke();
+  }
+  overlayCtx.fillStyle = '#ff1744';
+  for (let i = 0; i <= 28; i++) {
+    const p = get(i);
+    if (p) overlayCtx.fillRect(p.x - 7, p.y - 7, 14, 14);
+  }
+}
+
+function applyTransform(bones: BoneTransforms): void {
+  overlayCtx.clearRect(0, 0, STAGE_W, STAGE_H);
+  drawCostume(overlayCtx, parts, bones, STAGE_W, STAGE_H);
+  if (DEBUG && debugPose) drawDebug(debugPose);
+  const tr = bones.head;
   if (selected) {
     const h = selected.hole;
     guideEllipse.setAttribute('cx', String(tr.k * h.cx + tr.tx));
@@ -145,10 +174,17 @@ function tick(): void {
   const now = performance.now();
   if (detected) {
     const face = videoFaceToStage(detected, video.videoWidth, video.videoHeight, facing === 'user');
-    const target = trackedTransform(selected, face);
-    if (target) {
+    const head = trackedTransform(selected, face);
+    if (head) {
+      // 骨格が使えれば、顔に最も近い人の骨格に合わせて部品ごとに動かす
+      const pose = selected.rig && isPoseReady()
+        ? pickPose(detectPoses(video), face, video.videoWidth, video.videoHeight, facing === 'user')
+        : null;
+      debugPose = pose;
+      if (DEBUG) (window as unknown as { __debug: unknown }).__debug = { pose, current };
+      const target = rigTransforms(selected, head, pose);
       // 見失った直後は飛びつかせ、追従中は滑らかに
-      current = now - lastFaceAt > LOST_FACE_MS ? target : lerpTransform(current, target, SMOOTHING);
+      current = now - lastFaceAt > LOST_FACE_MS ? target : lerpBones(current, target, SMOOTHING);
       applyTransform(current);
     }
     lastFaceAt = now;
@@ -164,13 +200,16 @@ function tick(): void {
 /* ---------- カメラ ---------- */
 async function openCamera(costume: Costume): Promise<void> {
   selected = costume;
-  overlay.src = `${import.meta.env.BASE_URL}${costume.image}`;
+  parts = [];
+  overlayCtx.clearRect(0, 0, STAGE_W, STAGE_H);
+  const partsReady = loadParts(costume).then((p) => {
+    if (selected === costume) parts = p;
+  });
   stage.classList.toggle('mirror', facing === 'user');
   cameraStatus.hidden = false;
   show('camera');
-  current = defaultTransform(costume, facing);
+  current = uniform(defaultTransform(costume, facing));
   lastFaceAt = 0;
-  applyTransform(current);
   // 顔追従する衣装は、顔を検出するまで表示しない
   guide.style.display = costume.face ? 'none' : '';
   setCostumeVisible(!costume.face);
@@ -178,7 +217,11 @@ async function openCamera(costume: Costume): Promise<void> {
   try {
     await startCamera(video, facing);
     cameraStatus.hidden = true;
+    await partsReady;
+    applyTransform(current);
     if (costume.face) await initTracker();
+    // 骨格検出（約5.8MB）は裏で読み込み、準備ができ次第使う
+    if (costume.rig) void initPose();
     cancelAnimationFrame(loopId);
     tick();
   } catch (e) {
@@ -207,8 +250,7 @@ document.addEventListener('visibilitychange', () => {
 
 $('#btn-shoot').addEventListener('click', async () => {
   if (!selected || !video.videoWidth || shootBtn.disabled) return;
-  const costumeImg = await loadImage(selected.image);
-  const canvas = composeFrame(video, costumeImg, { mirror: facing === 'user', transform: current });
+  const canvas = composeFrame(video, parts, { mirror: facing === 'user', bones: current });
   const blob = await canvasToBlob(canvas);
   resultFile = toFile(blob);
   if (resultUrl) URL.revokeObjectURL(resultUrl);
