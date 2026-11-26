@@ -12,6 +12,13 @@ npm run build    # 型チェック + dist/ 出力
 
 実機確認: getUserMedia は HTTPS 必須。`npx cloudflared tunnel --url http://localhost:5173` などで HTTPS の URL を発行して、スマホで開く。
 
+## 公開
+
+- 本番URL: https://taiwan-ar.vercel.app （QR: `docs/qr-taiwan-ar.png`）
+- Vercel の GitHub 連携。`claude/trusting-gates-fqmta0` へ push すると自動で本番デプロイされる。
+- 設定: Framework=Vite / Build=`npm run build` / Output=`dist`
+- Cloudflare Workers へ出す場合は `wrangler.jsonc` と `npm run deploy` を使う（未運用）。
+
 ## 構成
 
 | パス | 役割 |
