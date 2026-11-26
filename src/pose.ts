@@ -8,6 +8,11 @@ let landmarker: PoseLandmarker | null = null;
 let loading: Promise<boolean> | null = null;
 let lastVideoTime = -1;
 let lastResult: PoseLandmark[][] = [];
+/** 骨格検出1回にかかる時間の平均（ms）と、何フレームに1回検出するか（重い端末では間引く） */
+let avgMs = 0;
+let frameCount = 0;
+const TARGET_MS_PER_FRAME = 25;
+const MAX_STRIDE = 4;
 
 /** 正規化座標（0〜1）と、映っている確からしさ */
 export interface PoseLandmark {
@@ -57,6 +62,11 @@ export function initPose(): Promise<boolean> {
   return loading;
 }
 
+/** 骨格検出1回の平均時間（デバッグ表示用） */
+export function poseCostMs(): number {
+  return avgMs;
+}
+
 export function isPoseReady(): boolean {
   return landmarker !== null;
 }
@@ -66,7 +76,12 @@ export function detectPoses(video: HTMLVideoElement): PoseLandmark[][] {
   if (!landmarker || video.readyState < 2) return [];
   if (video.currentTime === lastVideoTime) return lastResult;
   lastVideoTime = video.currentTime;
-  const res = landmarker.detectForVideo(video, performance.now());
+  const stride = Math.min(MAX_STRIDE, Math.max(1, Math.ceil(avgMs / TARGET_MS_PER_FRAME)));
+  if (frameCount++ % stride !== 0) return lastResult;
+  const t0 = performance.now();
+  const res = landmarker.detectForVideo(video, t0);
+  const ms = performance.now() - t0;
+  avgMs = avgMs === 0 ? ms : avgMs * 0.9 + ms * 0.1;
   lastResult = res.landmarks.map((pose) => pose.map((p) => ({ x: p.x, y: p.y, visibility: p.visibility ?? 0 })));
   return lastResult;
 }

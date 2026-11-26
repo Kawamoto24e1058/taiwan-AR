@@ -6,7 +6,7 @@ import { canShareFile, downloadFile, shareFile, toFile } from './share';
 import { isInAppBrowser, redirectLineToExternal } from './browser';
 import { detectFace, initTracker, isTrackerReady } from './tracker';
 import { defaultTransform, STAGE_H, STAGE_W, trackedTransform, videoFaceToStage } from './geometry';
-import { detectPoses, initPose, isPoseReady } from './pose';
+import { detectPoses, initPose, isPoseReady, poseCostMs } from './pose';
 import { drawCostume, lerpBones, pickPose, rigTransforms, uniform, type Bone, type BoneTransforms } from './rig';
 
 type Screen = 'top' | 'select' | 'camera' | 'camera-error' | 'result';
@@ -136,6 +136,9 @@ function drawDebug(get: (i: number) => { x: number; y: number } | null): void {
     overlayCtx.lineTo(q.x, q.y);
     overlayCtx.stroke();
   }
+  overlayCtx.font = '40px sans-serif';
+  overlayCtx.fillStyle = '#fff';
+  overlayCtx.fillText(`pose ${Math.round(poseCostMs())}ms`, 30, 1590);
   overlayCtx.fillStyle = '#ff1744';
   for (let i = 0; i <= 28; i++) {
     const p = get(i);
@@ -181,7 +184,15 @@ function tick(): void {
         ? pickPose(detectPoses(video), face, video.videoWidth, video.videoHeight, facing === 'user')
         : null;
       debugPose = pose;
-      if (DEBUG) (window as unknown as { __debug: unknown }).__debug = { pose, current };
+      if (DEBUG) {
+        const w = window as unknown as { __debug?: { pose: unknown; current: unknown; frames: number; poseFrames: number } };
+        const d = (w.__debug ??= { pose: null, current: null, frames: 0, poseFrames: 0 });
+        d.pose = pose;
+        d.current = current;
+        d.frames++;
+        (d as { poseMs?: number }).poseMs = Math.round(poseCostMs());
+        if (pose) d.poseFrames++;
+      }
       const target = rigTransforms(selected, head, pose);
       // 見失った直後は飛びつかせ、追従中は滑らかに
       current = now - lastFaceAt > LOST_FACE_MS ? target : lerpBones(current, target, SMOOTHING);
