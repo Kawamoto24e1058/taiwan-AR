@@ -9,11 +9,13 @@
     "prebuild": "node scripts/copy-mediapipe.mjs",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "deploy": "npm run build && wrangler deploy"
   },
   "devDependencies": {
     "typescript": "^5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "wrangler": "^4.168.0"
   },
   "dependencies": {
     "@mediapipe/tasks-vision": "0.10.21"

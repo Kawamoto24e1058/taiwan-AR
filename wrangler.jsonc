@@ -1,0 +1,10 @@
+{
+  // Cloudflare Workers（静的アセット配信）の設定。デプロイ: npm run deploy
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "taiwan-ar",
+  "compatibility_date": "2026-11-26",
+  "assets": {
+    "directory": "./dist"
+  },
+  "workers_dev": true
+}

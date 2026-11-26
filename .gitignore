@@ -4,3 +4,4 @@ dist
 *.local
 public/mediapipe
 assets-src/*.png
+.wrangler
