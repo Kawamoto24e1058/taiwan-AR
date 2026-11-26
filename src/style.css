@@ -109,7 +109,8 @@ h2 { font-size: 1.15rem; margin: 0; }
 .stage video { object-fit: cover; }
 .stage.mirror video { transform: scaleX(-1); /* 前面カメラは鏡のように表示 */ }
 /* 衣装レイヤー: JS で translate/scale を毎フレーム指定する */
-.stage img { pointer-events: none; transform-origin: 0 0; will-change: transform; }
+.stage img { pointer-events: none; transform-origin: 0 0; will-change: transform; transition: opacity 0.25s; }
+.stage img.hidden { opacity: 0; }
 .guide { pointer-events: none; }
 .guide ellipse { fill: none; stroke: rgba(255, 255, 255, 0.8); stroke-width: 4; stroke-dasharray: 14 10; }
 .status {
@@ -144,5 +145,6 @@ h2 { font-size: 1.15rem; margin: 0; }
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.35);
 }
 .shutter:active { transform: scale(0.94); }
+.shutter:disabled { opacity: 0.4; }
 
 .result-image { width: 100%; aspect-ratio: 2 / 3; object-fit: contain; border-radius: 12px; background: #000; }

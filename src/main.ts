@@ -27,6 +27,7 @@ const cameraStatus = $<HTMLParagraphElement>('#camera-status');
 const cameraHint = $<HTMLParagraphElement>('#camera-hint');
 const resultImage = $<HTMLImageElement>('#result-image');
 const shareBtn = $<HTMLButtonElement>('#btn-share');
+const shootBtn = $<HTMLButtonElement>('#btn-shoot');
 
 /** 顔を見失ってから「顔を映してください」を出すまでの時間 */
 const LOST_FACE_MS = 800;
@@ -53,6 +54,12 @@ function show(screen: Screen): void {
     cancelAnimationFrame(loopId);
   }
   window.scrollTo(0, 0);
+}
+
+/** 衣装を表示するか（顔を検出している間だけ表示する） */
+function setCostumeVisible(visible: boolean): void {
+  overlay.classList.toggle('hidden', !visible);
+  shootBtn.disabled = !visible;
 }
 
 function setHint(key: MsgKey): void {
@@ -126,11 +133,13 @@ function tick(): void {
   if (!selected || !video.videoWidth) return;
 
   if (!selected.face || !isTrackerReady()) {
-    // 顔はめパネル（手動）モード
+    // 顔検出が使えない端末・衣装は、顔はめパネル（手動）として常に表示する
     guide.style.display = '';
+    setCostumeVisible(true);
     setHint(selected.face ? 'manualMode' : 'alignHint');
     return;
   }
+  guide.style.display = 'none';
 
   const detected = detectFace(video);
   const now = performance.now();
@@ -143,9 +152,11 @@ function tick(): void {
       applyTransform(current);
     }
     lastFaceAt = now;
-    guide.style.display = 'none';
+    setCostumeVisible(true);
     setHint('alignHint');
   } else if (now - lastFaceAt > LOST_FACE_MS) {
+    // 人が映っていない間は衣装を消し、撮影もできないようにする
+    setCostumeVisible(false);
     setHint('faceSearching');
   }
 }
@@ -160,6 +171,9 @@ async function openCamera(costume: Costume): Promise<void> {
   current = defaultTransform(costume, facing);
   lastFaceAt = 0;
   applyTransform(current);
+  // 顔追従する衣装は、顔を検出するまで表示しない
+  guide.style.display = costume.face ? 'none' : '';
+  setCostumeVisible(!costume.face);
   setHint(costume.face ? 'preparing' : 'alignHint');
   try {
     await startCamera(video, facing);
@@ -192,7 +206,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 $('#btn-shoot').addEventListener('click', async () => {
-  if (!selected || !video.videoWidth) return;
+  if (!selected || !video.videoWidth || shootBtn.disabled) return;
   const costumeImg = await loadImage(selected.image);
   const canvas = composeFrame(video, costumeImg, { mirror: facing === 'user', transform: current });
   const blob = await canvasToBlob(canvas);
