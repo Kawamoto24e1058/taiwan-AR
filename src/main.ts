@@ -235,6 +235,9 @@ async function init(): Promise<void> {
   if (redirectLineToExternal()) return;
   $<HTMLElement>('#in-app-warning').hidden = !isInAppBrowser;
   applyTranslations();
+  // 先にトップを表示する（衣装データの読み込みを待ってから表示すると、
+  // 回線が遅いときに「はじめる」を押した後でトップへ戻されてしまう）
+  show('top');
   try {
     costumes = await loadCostumes();
     renderCostumeList();
@@ -243,7 +246,6 @@ async function init(): Promise<void> {
   } catch (e) {
     console.error(e);
   }
-  show('top');
 }
 
 void init();
