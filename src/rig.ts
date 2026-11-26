@@ -129,7 +129,8 @@ export function rigTransforms(costume: Costume, head: Transform, get: ((i: numbe
 export function lerpBones(a: BoneTransforms, b: BoneTransforms, t: number): BoneTransforms {
   const mix = (x: Transform, y: Transform): Transform => ({
     k: x.k + (y.k - x.k) * t,
-    rot: x.rot + (y.rot - x.rot) * t,
+    // 角度は ±180° をまたぐときに遠回りしないよう、最短の向きで補間する
+    rot: x.rot + Math.atan2(Math.sin(y.rot - x.rot), Math.cos(y.rot - x.rot)) * t,
     tx: x.tx + (y.tx - x.tx) * t,
     ty: x.ty + (y.ty - x.ty) * t,
   });
