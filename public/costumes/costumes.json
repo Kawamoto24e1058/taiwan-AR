@@ -1,0 +1,29 @@
+{
+  "_comment": "衣装を追加するときはこの配列に1件足す。hole は 1080x1620 の画像上の顔の穴（楕円）の中心と半径(px)。published=false の衣装は表示されない（監修前の衣装はfalseにする）。",
+  "costumes": [
+    {
+      "id": "costume-1",
+      "image": "costumes/placeholder-1.webp",
+      "name": { "ja": "衣装1（仮）", "zh-Hant": "服裝1（暫定）" },
+      "description": null,
+      "hole": { "cx": 540, "cy": 520, "rx": 170, "ry": 220 },
+      "published": true
+    },
+    {
+      "id": "costume-2",
+      "image": "costumes/placeholder-2.webp",
+      "name": { "ja": "衣装2（仮）", "zh-Hant": "服裝2（暫定）" },
+      "description": null,
+      "hole": { "cx": 540, "cy": 520, "rx": 170, "ry": 220 },
+      "published": true
+    },
+    {
+      "id": "costume-3",
+      "image": "costumes/placeholder-3.webp",
+      "name": { "ja": "衣装3（仮）", "zh-Hant": "服裝3（暫定）" },
+      "description": null,
+      "hole": { "cx": 540, "cy": 520, "rx": 170, "ry": 220 },
+      "published": true
+    }
+  ]
+}
