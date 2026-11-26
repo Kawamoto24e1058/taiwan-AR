@@ -1,4 +1,5 @@
 export type CameraErrorKind = 'denied' | 'unsupported' | 'other';
+export type Facing = 'user' | 'environment';
 
 export class CameraError extends Error {
   constructor(public kind: CameraErrorKind, message: string) {
@@ -8,8 +9,8 @@ export class CameraError extends Error {
 
 let stream: MediaStream | null = null;
 
-/** 前面カメラを起動して video 要素に流す */
-export async function startCamera(video: HTMLVideoElement): Promise<void> {
+/** カメラを起動して video 要素に流す（user=前面, environment=背面） */
+export async function startCamera(video: HTMLVideoElement, facing: Facing): Promise<void> {
   if (!navigator.mediaDevices?.getUserMedia) {
     // HTTP配信、または一部のアプリ内ブラウザ
     throw new CameraError('unsupported', 'getUserMedia not available');
@@ -18,11 +19,7 @@ export async function startCamera(video: HTMLVideoElement): Promise<void> {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-      video: {
-        facingMode: 'user',
-        width: { ideal: 1920 },
-        height: { ideal: 1920 },
-      },
+      video: { facingMode: { ideal: facing }, width: { ideal: 1920 }, height: { ideal: 1920 } },
     });
   } catch (e) {
     const name = (e as DOMException)?.name;

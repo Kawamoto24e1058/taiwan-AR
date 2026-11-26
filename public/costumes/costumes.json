@@ -1,28 +1,59 @@
 {
-  "_comment": "衣装を追加するときはこの配列に1件足す。hole は 1080x1620 の画像上の顔の穴（楕円）の中心と半径(px)。published=false の衣装は表示されない（監修前の衣装はfalseにする）。",
+  "_comment": "衣装を追加するときはこの配列に1件足す。座標はすべて1080x1620の衣装画像上のpx。hole=手動モードの顔ガイド（楕円）。face=顔追従の基準（顔の中心と横幅）。faceが無い衣装は顔はめパネルとして動く。published=falseは非表示（監修前の衣装はfalseに）。",
   "costumes": [
     {
       "id": "costume-1",
-      "image": "costumes/placeholder-1.webp",
-      "name": { "ja": "衣装1（仮）", "zh-Hant": "服裝1（暫定）" },
+      "image": "costumes/costume1.webp",
+      "name": {
+        "ja": "衣装1（下絵・監修前）",
+        "zh-Hant": "服裝1（草稿・待審閱）"
+      },
       "description": null,
-      "hole": { "cx": 540, "cy": 520, "rx": 170, "ry": 220 },
+      "hole": {
+        "cx": 539,
+        "cy": 345,
+        "rx": 72,
+        "ry": 80
+      },
+      "face": {
+        "cx": 539,
+        "cy": 345,
+        "width": 141,
+        "fitScale": 1.1,
+        "offsetY": 0
+      },
       "published": true
     },
     {
       "id": "costume-2",
       "image": "costumes/placeholder-2.webp",
-      "name": { "ja": "衣装2（仮）", "zh-Hant": "服裝2（暫定）" },
+      "name": {
+        "ja": "衣装2（仮）",
+        "zh-Hant": "服裝2（暫定）"
+      },
       "description": null,
-      "hole": { "cx": 540, "cy": 520, "rx": 170, "ry": 220 },
+      "hole": {
+        "cx": 540,
+        "cy": 520,
+        "rx": 170,
+        "ry": 220
+      },
       "published": true
     },
     {
       "id": "costume-3",
       "image": "costumes/placeholder-3.webp",
-      "name": { "ja": "衣装3（仮）", "zh-Hant": "服裝3（暫定）" },
+      "name": {
+        "ja": "衣装3（仮）",
+        "zh-Hant": "服裝3（暫定）"
+      },
       "description": null,
-      "hole": { "cx": 540, "cy": 520, "rx": 170, "ry": 220 },
+      "hole": {
+        "cx": 540,
+        "cy": 520,
+        "rx": 170,
+        "ry": 220
+      },
       "published": true
     }
   ]

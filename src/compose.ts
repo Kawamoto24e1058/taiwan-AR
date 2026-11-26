@@ -1,45 +1,38 @@
 import { EVENT } from './config';
-
-/**
- * object-fit: cover と同じ切り抜き範囲を計算する。
- * プレビュー（CSS）と保存画像（Canvas）で同じ見え方にするための共通計算。
- */
-function coverRect(srcW: number, srcH: number, dstW: number, dstH: number) {
-  const scale = Math.max(dstW / srcW, dstH / srcH);
-  const w = srcW * scale;
-  const h = srcH * scale;
-  return { x: (dstW - w) / 2, y: (dstH - h) / 2, w, h };
-}
+import { coverRect, STAGE_H, STAGE_W, type Transform } from './geometry';
 
 export interface ComposeOptions {
-  /** プレビューと同じく左右反転して描く（決定事項: 見たまま保存） */
+  /** プレビューと同じく左右反転して描く（前面カメラのみ。決定事項: 見たまま保存） */
   mirror: boolean;
+  /** 衣装レイヤーの配置 */
+  transform: Transform;
 }
 
-/** カメラ映像の現在フレームと衣装パネルを合成した Canvas を返す */
+/** カメラ映像の現在フレームと衣装レイヤーを合成した Canvas を返す */
 export function composeFrame(
   video: HTMLVideoElement,
   costume: HTMLImageElement,
-  { mirror }: ComposeOptions,
+  { mirror, transform }: ComposeOptions,
 ): HTMLCanvasElement {
-  const W = EVENT.outputWidth;
-  const H = EVENT.outputHeight;
   const canvas = document.createElement('canvas');
-  canvas.width = W;
-  canvas.height = H;
+  canvas.width = STAGE_W;
+  canvas.height = STAGE_H;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('2D context unavailable');
 
-  const r = coverRect(video.videoWidth, video.videoHeight, W, H);
+  const r = coverRect(video.videoWidth, video.videoHeight);
   ctx.save();
   if (mirror) {
-    ctx.translate(W, 0);
+    ctx.translate(STAGE_W, 0);
     ctx.scale(-1, 1);
   }
   ctx.drawImage(video, r.x, r.y, r.w, r.h);
   ctx.restore();
 
-  ctx.drawImage(costume, 0, 0, W, H);
+  const { k, rot, tx, ty } = transform;
+  ctx.setTransform(k * Math.cos(rot), k * Math.sin(rot), -k * Math.sin(rot), k * Math.cos(rot), tx, ty);
+  ctx.drawImage(costume, 0, 0, STAGE_W, STAGE_H);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   return canvas;
 }
 

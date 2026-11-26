@@ -45,7 +45,7 @@
 
     <!-- カメラ -->
     <section class="screen camera-screen" data-screen="camera" hidden>
-      <div class="stage" id="stage">
+      <div class="stage mirror" id="stage">
         <video id="video" playsinline muted autoplay></video>
         <img id="costume-overlay" alt="" />
         <svg class="guide" id="guide" viewBox="0 0 1080 1620" preserveAspectRatio="none" aria-hidden="true">
@@ -53,11 +53,11 @@
         </svg>
         <p class="status" id="camera-status" data-i18n="cameraStarting"></p>
       </div>
-      <p class="hint" data-i18n="alignHint"></p>
+      <p class="hint" id="camera-hint" data-i18n="alignHint"></p>
       <div class="controls">
         <button type="button" class="ghost" data-go="select" data-i18n="back"></button>
         <button type="button" class="shutter" id="btn-shoot" aria-label="shoot"><span data-i18n="shoot"></span></button>
-        <span class="spacer"></span>
+        <button type="button" class="ghost flip" id="btn-flip" data-i18n="switchCamera"></button>
       </div>
     </section>
 

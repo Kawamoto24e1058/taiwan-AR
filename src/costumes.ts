@@ -7,12 +7,26 @@ export interface Hole {
   ry: number;
 }
 
+/** 衣装画像上の顔の位置（顔追従用）。width は顔の横幅(px) */
+export interface FaceAnchor {
+  cx: number;
+  cy: number;
+  width: number;
+  /** 検出した顔の幅に対する倍率（既定 1.1） */
+  fitScale?: number;
+  /** 顔の幅に対する上下のずらし量（既定 0） */
+  offsetY?: number;
+}
+
 export interface Costume {
   id: string;
   image: string;
   name: Record<Lang, string>;
   description: Record<Lang, string> | null;
+  /** 手動（顔はめパネル）モードで表示するガイドの楕円 */
   hole: Hole;
+  /** 指定があれば顔追従する */
+  face?: FaceAnchor;
   published: boolean;
 }
 
