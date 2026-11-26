@@ -28,5 +28,7 @@
   "switchCamera": "切換鏡頭",
   "preparing": "準備中…",
   "faceSearching": "請將人物對準鏡頭（需看得到臉）",
-  "manualMode": "請將臉對準框框（此裝置無法使用自動追蹤）"
+  "manualMode": "請將臉對準框框（此裝置無法使用自動追蹤）",
+  "loadError": "無法載入服飾資料。請確認網路連線後重新整理。",
+  "reload": "重新整理"
 }

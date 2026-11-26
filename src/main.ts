@@ -252,14 +252,37 @@ async function init(): Promise<void> {
   // 先にトップを表示する（衣装データの読み込みを待ってから表示すると、
   // 回線が遅いときに「はじめる」を押した後でトップへ戻されてしまう）
   show('top');
-  try {
-    costumes = await loadCostumes();
-    renderCostumeList();
-    // 衣装画像を先読みしておく（会場Wi-Fiが混んでいても撮影時に待たせないため）
-    costumes.forEach((c) => void loadImage(c.image).catch(() => undefined));
-  } catch (e) {
-    console.error(e);
+  await loadCostumeData();
+}
+
+/** 衣装データを読み込む。会場Wi-Fiの一時的な失敗に備えて再試行し、だめなら再読み込みボタンを出す */
+async function loadCostumeData(): Promise<void> {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      costumes = await loadCostumes();
+      renderCostumeList();
+      // 衣装画像を先読みしておく（会場Wi-Fiが混んでいても撮影時に待たせないため）
+      costumes.forEach((c) => void loadImage(c.image).catch(() => undefined));
+      return;
+    } catch (e) {
+      console.error(e);
+      await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
+    }
   }
+  const list = $<HTMLUListElement>('#costume-list');
+  const li = document.createElement('li');
+  li.className = 'load-error';
+  const msg = document.createElement('p');
+  msg.dataset.i18n = 'loadError';
+  msg.textContent = t('loadError');
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'primary';
+  btn.dataset.i18n = 'reload';
+  btn.textContent = t('reload');
+  btn.addEventListener('click', () => location.reload());
+  li.append(msg, btn);
+  list.replaceChildren(li);
 }
 
 void init();
